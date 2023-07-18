@@ -15,7 +15,8 @@ export class NewsPanel extends Component {
 
         this.state = {
             news: [],
-            selectedNews: NewsPanel.defaultNewsTemplate
+            selectedNews: NewsPanel.defaultNewsTemplate,
+            newsCardState: []
         };
 
         this.populateNews = this.populateNews.bind(this);
@@ -30,9 +31,16 @@ export class NewsPanel extends Component {
             listContent = <p>Loading...</p>
         }
         else {
-            listContent = this.state.news.map(n => {
+            listContent = this.state.news.map((n, newsIndex) => {
+                const generatedContent = this.generateContent(n);
                 const imageUrl = n.images.length >= n.coverIndex && n.coverIndex < n.images.length ? n.images[n.coverIndex].fileUrl : '';
-                return(
+                const showContent = this.state.newsCardState[newsIndex] == "open"; 
+                const content = showContent && <p class="card-text">{generatedContent}</p>
+                const buttonContent = showContent
+                    ? (<><i class="bi bi-chevron-compact-up"></i><span style={{ marginLeft: 20, marginRight: 20 }}>Hide</span><i class="bi bi-chevron-compact-up"></i></>)
+                    : (<><i class="bi bi-chevron-compact-down"></i><span style={{ marginLeft: 20, marginRight: 20 }}>Read</span><i class="bi bi-chevron-compact-down"></i></>);
+                const buttonContainerClasses = showContent ? "text-end" : "d-grid"
+                return (
                     <div class="card mb-3">
                         <img src={imageUrl} style={{ height: 300 }} class="card-img-top object-fit-contain" />
                         <div class="card-body">
@@ -40,15 +48,16 @@ export class NewsPanel extends Component {
                                 <a class="btn btn-link" onClick={() => this.editNews(n)}><i class="bi bi-pencil-square"></i></a>
                                 <a class="btn btn-link" onClick={() => this.deleteNews(n.id)}><i class="bi bi-x-circle"></i></a>
                             </h5>
-                            <div class="d-grid gap-2">
-                                <button class="btn btn-outline-secondary" type="button">Read</button>
+                            <div class={buttonContainerClasses}>
+                                <button class="btn btn-outline-secondary" type="button" onClick={() => this.showContentHandler(newsIndex)} >
+                                    {buttonContent}
+                                </button>
                             </div>
-                            <p class="card-text">{n.content}</p>
+                            {content}
                         </div>
                     </div>);
             });
         }
-
         return (
             <div className="container">
                 <h1 class="display-6">News</h1>
@@ -60,6 +69,33 @@ export class NewsPanel extends Component {
             </div>
         );
     }
+    generateContent(news) {
+        let content = [];
+        const regexp = /{\d+}/g;
+        var matches = news.content.matchAll(regexp);
+        var startIndex = 0;
+        var endIndex = 0;
+        for (const match of matches) {
+            endIndex = match.index;
+            content.push(<p>{news.content.substring(startIndex, endIndex)}</p>);
+            var imgIndex = parseInt(match[0].substring(1, match[0].length - 1));
+            var imgHref = imgIndex >= 0 && imgIndex < news.images.length ? news.images[imgIndex].fileUrl : '';
+            content.push(<div class="text-center"><img src={imgHref} style={{ height: 300 }} /></div>)
+            startIndex = endIndex + match[0].length;
+        }
+        content.push(<p>{news.content.substring(startIndex)}</p>);
+        return content.length == 0 ? news.content : content;
+    }
+
+    showContentHandler(index) {
+        this.state.newsCardState[index] = this.state.newsCardState[index] == "closed" ? "open" : "closed";
+        this.setState(
+            {
+                news: this.state.news,
+                newsCardState: this.state.newsCardState
+            }
+        )
+    }
 
     async populateNews() {
         const response = await fetch('api/news', {
@@ -67,7 +103,11 @@ export class NewsPanel extends Component {
             headers: { 'Accept': 'application/json' }
         });
         const data = await response.json();
-        this.setState({ news: data, selectedNews: NewsPanel.defaultNewsTemplate});
+        this.setState({
+            news: data,
+            selectedNews: NewsPanel.defaultNewsTemplate,
+            newsCardState: data.map(d => "closed")
+        });
     }
 
     async deleteNews(newsId) {
@@ -83,7 +123,8 @@ export class NewsPanel extends Component {
             news: this.state.news,
             selectedNews: {
                 ...news
-            }
+            },
+            newsCardState: this.state.newsCardState
         })
 
         const modal = new window.bootstrap.Modal(document.getElementById('newsEditorModal'));
@@ -93,10 +134,12 @@ export class NewsPanel extends Component {
     createNews() {
         this.setState({
             news: this.state.news,
-            selectedNews: NewsPanel.defaultNewsTemplate
+            selectedNews: NewsPanel.defaultNewsTemplate,
+            newsCardState: this.state.newsCardState
         })
 
         const modal = new window.bootstrap.Modal(document.getElementById('newsEditorModal'));
         modal.show();
     }
+
 }
