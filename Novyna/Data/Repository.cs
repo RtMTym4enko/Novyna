@@ -23,7 +23,7 @@ namespace Novyna.Data
             return orderBy != null ? orderBy(query) : query;
         }
 
-        public void Delete(T entity)
+        public virtual void Delete(T entity)
         {
             var entitryState = DbContext.Entry(entity).State;
             if (entitryState == EntityState.Detached)
@@ -33,10 +33,9 @@ namespace Novyna.Data
             _dataSet.Remove(entity);
         }
 
-        public void Update(T entity)
+        public virtual void Update(T entity)
         {
-            _dataSet.Attach(entity);
-            DbContext.Entry(entity).State = EntityState.Modified;
+            _dataSet.Update(entity);
         }
 
         public virtual T Create(T entity)
@@ -44,7 +43,7 @@ namespace Novyna.Data
             return _dataSet.Add(entity).Entity;
         }
         
-        public T? Find(Guid newsId) => _dataSet.Find(newsId);
+        public virtual T? Find(Guid newsId) => _dataSet.Find(newsId);
 
         protected virtual void Dispose(bool disposing)
         {
