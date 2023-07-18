@@ -16,15 +16,25 @@ export class NewsPanel extends Component {
         this.state = {
             news: [],
             selectedNews: NewsPanel.defaultNewsTemplate,
-            newsCardState: []
+            newsCardState: [],
+            selectedTag: this.props.selectedTag
         };
 
         this.populateNews = this.populateNews.bind(this);
     }
 
+    componentWillReceiveProps(nextProps) {
+        this.state = {
+            ... this.state,
+            selectedTag: nextProps.selectedTag
+        }
+        this.populateNews();
+    }
+
     componentDidMount() {
         this.populateNews();
     }
+
     render() {
         let listContent = null;
         if (this.state.news.length === 0) {
@@ -91,14 +101,14 @@ export class NewsPanel extends Component {
         this.state.newsCardState[index] = this.state.newsCardState[index] == "closed" ? "open" : "closed";
         this.setState(
             {
-                news: this.state.news,
-                newsCardState: this.state.newsCardState
+                ...this.setState
             }
-        )
+        );
     }
 
     async populateNews() {
-        const response = await fetch('api/news', {
+        const uri = this.state.selectedTag == null ? 'api/news' : 'api/news?tags=' + encodeURIComponent(this.state.selectedTag.name);
+        const response = await fetch(uri, {
             method: "GET",
             headers: { 'Accept': 'application/json' }
         });
@@ -106,7 +116,8 @@ export class NewsPanel extends Component {
         this.setState({
             news: data,
             selectedNews: NewsPanel.defaultNewsTemplate,
-            newsCardState: data.map(d => "closed")
+            newsCardState: data.map(d => "closed"),
+            selectedTag: this.state.selectedTag
         });
     }
 
@@ -120,11 +131,10 @@ export class NewsPanel extends Component {
 
     editNews(news) {
         this.setState({
-            news: this.state.news,
+            ... this.state,
             selectedNews: {
                 ...news
-            },
-            newsCardState: this.state.newsCardState
+            }
         })
 
         const modal = new window.bootstrap.Modal(document.getElementById('newsEditorModal'));
@@ -133,9 +143,8 @@ export class NewsPanel extends Component {
 
     createNews() {
         this.setState({
-            news: this.state.news,
+            ... this.state,
             selectedNews: NewsPanel.defaultNewsTemplate,
-            newsCardState: this.state.newsCardState
         })
 
         const modal = new window.bootstrap.Modal(document.getElementById('newsEditorModal'));

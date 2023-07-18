@@ -13,7 +13,8 @@ export class TagPanel extends Component {
 
         this.state = {
             tags: [],
-            selectedTag: TagPanel.defaultTagTemplate
+            forEditing: TagPanel.defaultTagTemplate,
+            selectedTag: null
         };
 
         this.populateTags = this.populateTags.bind(this);
@@ -29,13 +30,15 @@ export class TagPanel extends Component {
             listContent = <p>...</p>
         }
         else {
-            const tagList = this.state.tags.map(t => (
-                <tr key={t.id}>
-                    <td class="align-middle" style={{ color: t.color }}><i class="bi bi-bookmark-fill px-2"></i></td>
-                    <td class="align-middle">{t.name}</td>
-                    <td><a class="btn btn-link" onClick={() => this.editTag(t)}><i class="bi bi-pencil-square"></i></a></td>
-                    <td><a class="btn btn-link" onClick={() => this.deleteTag(t.id)}><i class="bi bi-x-circle"></i></a></td>
-                </tr>));
+            const tagList = this.state.tags.map(t => {
+                const selectedBorder = t.id == this.state.selectedTag?.id == true ? "rounded border border-4 border-primary m-2" : "m-2";
+                return (<tr key={t.id} class={ selectedBorder } onClick={() => this.selectTagHandler(t)}>
+                        <td class="align-middle" style={{ color: t.color }}><i class="bi bi-bookmark-fill px-2"></i></td>
+                        <td class="align-middle">{t.name}</td>
+                        <td><a class="btn btn-link" onClick={(e) => this.editTag(e,t)}><i class="bi bi-pencil-square"></i></a></td>
+                        <td><a class="btn btn-link" onClick={(e) => this.deleteTag(e,t.id)}><i class="bi bi-x-circle"></i></a></td>
+                    </tr>)
+            });
             listContent = <table class="table table-sm"><tbody>{tagList}</tbody></table>
         }
 
@@ -46,7 +49,7 @@ export class TagPanel extends Component {
                 <button type="button" class="btn btn-outline-dark" onClick={() => this.createTag()}><i class="bi bi-plus-circle px-2"></i>Add tag</button>
                 <hr class="border border-primary border-1" />
                 {listContent}
-                <TagEditorDialog onSave={this.populateTags} tag={this.state.selectedTag} />
+                <TagEditorDialog onSave={this.populateTags} tag={this.state.forEditing} />
             </div>
         );
     }
@@ -60,11 +63,13 @@ export class TagPanel extends Component {
         this.setState(
             {
                 tags: data,
-                selectedTag: TagPanel.defaultTagTemplate
+                forEditing: TagPanel.defaultTagTemplate,
+                selectedTag: null
             });
     }
 
-    async deleteTag(tagId) {
+    async deleteTag(e, tagId) {
+        e.stopPropagation();
         const response = await fetch('api/tags/' + tagId, {
             method: "DELETE"
         }
@@ -72,10 +77,12 @@ export class TagPanel extends Component {
         await this.populateTags();
     }
 
-    editTag(tag) {
+    editTag(e, tag) {
+        e.stopPropagation();
         this.setState({
             tags: this.state.tags,
-            selectedTag: tag
+            forEditing: tag,
+            selectedTag: this.state.selectedTag
         })
 
         const modal = new window.bootstrap.Modal(document.getElementById('tagEditorModal'));
@@ -85,10 +92,29 @@ export class TagPanel extends Component {
     createTag() {
         this.setState({
             tags: this.state.tags,
-            selectedTag: TagPanel.defaultTagTemplate
+            forEditing: TagPanel.defaultTagTemplate,
+            selectedTag: this.state.selectedTag
         })
 
         const modal = new window.bootstrap.Modal(document.getElementById('tagEditorModal'));
         modal.show();
+    }
+
+    selectTagHandler(t) {
+
+        const newState = this.state.selectedTag == null
+            ? t
+            : this.state.selectedTag.name == t.name
+                ? null
+                : t;
+        this.setState({
+            tags: this.state.tags,
+            forEditing: TagPanel.defaultTagTemplate,
+            selectedTag: newState
+        });
+
+        if (this.props.onTagSelected != null) {
+            this.props.onTagSelected(newState);
+        }
     }
 }

@@ -1,16 +1,18 @@
-﻿import React from 'react';
+﻿import React, { useState } from 'react';
 import { TagPanel } from './TagPanel';
 import { NewsPanel } from './NewsPanel';
 
-function MainPage() {
+function MainPage() { 
+    const [selectedTag, setSelectedTag] = useState(null);
+
     return (
         <div className="container-fluid">
             <div className="row">
                 <div className="col">
-                    <NewsPanel />
+                    <NewsPanel selectedTag={selectedTag} />
                 </div>
                 <div className="col-auto">
-                    <TagPanel />
+                    <TagPanel onTagSelected={(t) => setSelectedTag(t)} />
                 </div>
             </div>
         </div>
