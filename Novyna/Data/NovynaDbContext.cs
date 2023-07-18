@@ -15,7 +15,9 @@ namespace Novyna.Data
             modelBuilder.Entity<News>().HasKey(n => n.Id);
             modelBuilder.Entity<News>().Property(n => n.Title).IsRequired().HasMaxLength(200);
             modelBuilder.Entity<News>().Property(n => n.Content).IsRequired();
-            modelBuilder.Entity<News>().HasMany(n => n.Tags).WithMany();
+            modelBuilder.Entity<News>().HasMany(n => n.Tags).WithMany().UsingEntity(
+            l => l.HasOne(typeof(Tag)).WithMany().OnDelete(DeleteBehavior.Cascade),
+            r => r.HasOne(typeof(News)).WithMany().OnDelete(DeleteBehavior.Cascade));
 
             modelBuilder.Entity<Tag>().ToTable("Tags");
             modelBuilder.Entity<Tag>().HasKey(t => t.Id);
