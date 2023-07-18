@@ -2,7 +2,7 @@
 {
     public sealed record Image
     {
-        public Guid Id { get; }
+        public Guid Id { get; set; }
 
         public Guid? NewsId { get; set; }
 

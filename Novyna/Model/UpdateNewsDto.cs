@@ -13,5 +13,9 @@ namespace Novyna.Model
 
         [Required]
         public int CoverIndex { get; set; }
+
+        public ImageDto[] Images { get; set; }
+
+        public TagDto[] Tags { get; set; }
     }
 }

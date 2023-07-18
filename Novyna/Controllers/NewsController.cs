@@ -50,15 +50,15 @@ namespace Novyna.Controllers
         }
 
         [HttpPut("{newsId}")]
-        public ActionResult UpdateNews(Guid newsId, UpdateNewsDto updateNews)
+        public ActionResult UpdateNews(Guid newsId, UpdateNewsDto updatedNewsDto)
         {
             var newsFromRepo = _unitOfWork.NewsRepository.Find(newsId);
             if (newsFromRepo == null)
             {
                 return NotFound();
             }
-            _mapper.Map(updateNews, newsFromRepo);
-            _unitOfWork.NewsRepository.Update(newsFromRepo);
+            var updatedNews = _mapper.Map(updatedNewsDto, newsFromRepo);
+            _unitOfWork.NewsRepository.Update(updatedNews);
             _unitOfWork.Save();
 
             return NoContent();
